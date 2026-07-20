@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -10,15 +10,18 @@ from app.crud.user import (
 )
 from app.utils.auth import create_access_token, get_current_user
 from app.utils.password import verify_password
+from app.exceptions import (
+    UserNotFoundException,
+    UserAlreadyExistsException,
+    InvalidCredentialsException
+)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-
-
-@router.post("/register", response_model=UserRead, status_code=201)
+@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     if await get_user_by_login(db, user.login):
-        raise HTTPException(status_code=400, detail="Логин уже зарегестрирован")
+        raise UserAlreadyExistsException()
     return await create_user(db, user)
 
 
@@ -29,16 +32,10 @@ async def login(
 ):
     user = await get_user_by_login(db, form_data.username)
     if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный логин или пароль",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise InvalidCredentialsException()
 
     access_token = create_access_token(data={"sub": user.login})
     return {"access_token": access_token, "token_type": "bearer"}
-
-
 
 
 @router.get("/me", response_model=UserRead)
@@ -64,7 +61,7 @@ async def read_user(
 ):
     user = await get_user(db, user_id)
     if user is None:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        raise UserNotFoundException()
     return user
 
 
@@ -77,7 +74,7 @@ async def update_user_info(
 ):
     updated = await update_user(db, user_id, user)
     if updated is None:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        raise UserNotFoundException()
     return updated
 
 
@@ -89,5 +86,5 @@ async def delete_user_info(
 ):
     deleted = await delete_user(db, user_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail="Пользователь не найден")
+        raise UserNotFoundException()
     return {"message": "Пользователь удален"}

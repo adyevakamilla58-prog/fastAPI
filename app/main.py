@@ -23,7 +23,3 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok", "database": "sqlite"}
-
-@app.get("/test-user")
-async def test_user_route():
-    return {"message": "Ура, тестовый роут пользователя работает прямо из main!"}

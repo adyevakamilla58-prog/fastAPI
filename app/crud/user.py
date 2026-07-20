@@ -33,26 +33,22 @@ async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100):
     result = await db.execute(select(User).offset(skip).limit(limit))
     return result.scalars().all()
 
+
 async def update_user(db: AsyncSession, user_id: int, user_in: UserUpdate):
     user = await get_user(db, user_id)
     if not user:
         return None
 
-    if user_in.first_name is not None:
-        user.first_name = user_in.first_name
+    update_data = user_in.model_dump(exclude_none=True)
 
-    if user_in.last_name is not None:
-        user.last_name = user_in.last_name
-
-    if user_in.surname is not None:
-        user.surname = user_in.surname
-
-    if user_in.birthday is not None:
-        user.birthday = user_in.birthday
+    for key, value in update_data.items():
+        if hasattr(user, key):
+            setattr(user, key, value)
 
     await db.commit()
     await db.refresh(user)
     return user
+
 
 async def delete_user(db: AsyncSession, user_id: int):
     user = await get_user(db, user_id)
