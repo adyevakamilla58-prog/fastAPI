@@ -4,7 +4,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 import os
 from dotenv import load_dotenv
-from app.database import get_db
+from app.db.database import get_db
 
 load_dotenv()
 

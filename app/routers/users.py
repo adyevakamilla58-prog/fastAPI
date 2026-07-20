@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.database import get_db
+from app.db.database import get_db
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.crud.user import (
     create_user, get_user, get_users,
@@ -10,7 +10,7 @@ from app.crud.user import (
 )
 from app.utils.auth import create_access_token, get_current_user
 from app.utils.password import verify_password
-from app.exceptions import (
+from app.core.exceptions import (
     UserNotFoundException,
     UserAlreadyExistsException,
     InvalidCredentialsException
